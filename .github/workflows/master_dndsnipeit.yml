@@ -1,0 +1,35 @@
+# Docs for the Azure Web Apps Deploy action: https://github.com/Azure/webapps-deploy
+# More GitHub Actions for Azure: https://github.com/Azure/actions
+
+name: Build and deploy container app to Azure Web App - dndsnipeit
+
+on:
+  push:
+    branches:
+      - master
+  workflow_dispatch:
+
+jobs:
+  build-and-deploy:
+    runs-on: 'ubuntu-latest'
+
+    steps:
+    - uses: actions/checkout@master
+
+    - uses: azure/docker-login@v1
+      with:
+        login-server: https://index.docker.io/v1/
+        username: ${{ secrets.AzureAppService_ContainerUsername_b996fd263f5e41b1b0a728cf832d2942 }}
+        password: ${{ secrets.AzureAppService_ContainerPassword_8a86f2c7ff92471c8ed0741251b09d8a }}
+
+    - run: |
+        docker build . -t index.docker.io/${{ secrets.AzureAppService_ContainerUsername_b996fd263f5e41b1b0a728cf832d2942 }}/snipeitdnd:${{ github.sha }}
+        docker push index.docker.io/${{ secrets.AzureAppService_ContainerUsername_b996fd263f5e41b1b0a728cf832d2942 }}/snipeitdnd:${{ github.sha }}
+
+    - name: Deploy to Azure Web App
+      uses: azure/webapps-deploy@v2
+      with:
+        app-name: 'dndsnipeit'
+        slot-name: 'production'
+        publish-profile: ${{ secrets.AzureAppService_PublishProfile_bf751cf687f94d49a6753943defd7b59 }}
+        images: 'index.docker.io/${{ secrets.AzureAppService_ContainerUsername_b996fd263f5e41b1b0a728cf832d2942 }}/snipeitdnd:${{ github.sha }}'
